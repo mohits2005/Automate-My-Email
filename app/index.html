@@ -582,10 +582,6 @@ document.getElementById('googleBtn').onclick = () => {
 async function tryTokenFromUrl(){
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get('token');
-  if (urlBase){
-    state.base = urlBase;
-    document.getElementById('apiBase').value = urlBase;
-  }
   if (urlToken){
     // Scrub the token out of the address bar right away so it isn't
     // left sitting in browser history.
