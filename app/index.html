@@ -411,7 +411,7 @@
 // state
 // ---------------------------------------------------------------
 const state = {
-  base: 'http://localhost:8000',
+  base: 'https://automate-my-email.onrender.com',
   token: null,
   user: null,
   emails: [],
@@ -496,10 +496,7 @@ document.getElementById('tabRegister').onclick = () => {
   clearAuthErr();
 };
 
-document.getElementById('apiBase').addEventListener('change', (e)=>{
-  state.base = e.target.value.replace(/\/$/, '') || 'http://localhost:8000';
-  pingApi();
-});
+
 
 function setLoading(btn, loading, label){
   btn.disabled = loading;
@@ -572,18 +569,18 @@ document.getElementById('registerForm').addEventListener('submit', async (e)=>{
 });
 
 document.getElementById('googleBtn').onclick = () => {
-  // Send Google straight back to this same page (carrying the API base
-  // along so it survives the round trip), and the API appends ?token=
-  // to that URL once sign-in completes.
-  const here = window.location.href.split('?')[0];
-  const returnTo = here + '?api_base=' + encodeURIComponent(state.base);
-  const loginUrl = state.base + '/auth/google/login?frontend_redirect=' + encodeURIComponent(returnTo);
+  const returnTo = window.location.origin + window.location.pathname;
+
+  const loginUrl =
+    state.base +
+    '/auth/google/login?frontend_redirect=' +
+    encodeURIComponent(returnTo);
+
   window.location.href = loginUrl;
 };
 
 async function tryTokenFromUrl(){
   const params = new URLSearchParams(window.location.search);
-  const urlBase = params.get('api_base');
   const urlToken = params.get('token');
   if (urlBase){
     state.base = urlBase;
@@ -982,7 +979,11 @@ document.querySelectorAll('.navitem').forEach(btn=>{
 // ---------------------------------------------------------------
 // boot
 // ---------------------------------------------------------------
-state.base = document.getElementById('apiBase').value;
+// ---------------------------------------------------------------
+// boot
+// ---------------------------------------------------------------
+
+
 pingApi();
 setInterval(pingApi, 15000);
 tryTokenFromUrl();
