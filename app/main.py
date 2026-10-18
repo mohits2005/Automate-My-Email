@@ -17,9 +17,28 @@ from app.api.email_analysis import router as email_analysis_router
 from app.api.task import router as task_router
 
 from app.models.task import Task
+import asyncio
+from contextlib import asynccontextmanager, suppress
+from app.workers.email_worker import process_email, main
 
 
-app = FastAPI(title="AI Email Workflow")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting email analysis worker")
+
+    worker = asyncio.create_task(main())
+    try:
+        yield
+    finally:
+        print("Stopping worker..")
+
+        worker.cancel()
+
+        with suppress(asyncio.CancelledError):
+            await worker
+
+app = FastAPI(title="AI Email Workflow", lifespan=lifespan)
+
 Base.metadata.create_all(bind=engine)
 app.add_middleware(
     SessionMiddleware,

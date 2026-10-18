@@ -7,6 +7,8 @@ from app.models.email import Email
 from app.services.ai_service import analyze_email
 from app.models.email_analysis import EmailAnalysis
 import traceback
+from groq import APIStatusError
+
 QUEUE = "email_analysis_queue"
 PROCESSING_QUEUE = "email_analysis_processing"
 FAILED_QUEUE = "email_analysis_failed"
@@ -94,7 +96,7 @@ async def main():
                 print(f"Got job: {job}", flush=True)
             except Exception as e:
                 print(f"Redis error while waiting for the job {e}")
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
                 continue
 
             job_data = None
@@ -121,6 +123,13 @@ async def main():
                     continue
             try:
                 await process_email(job_data)
+            except APIStatusError as e:
+                if e.status_code == 413:
+                    print("TOKEN length exceeded allowed length per minute")
+                    await redis_client.lpush(FAILED_QUEUE, json.dumps(job_data))
+                    await redis_client.lrem(PROCESSING_QUEUE, 1, job)
+                    continue
+                raise
 
             except Exception as e:
                 print(f"Job failed with error: {e}")
@@ -129,8 +138,9 @@ async def main():
                     attempts = job_data.get("attempts", 0) + 1
                     job_data["attempts"] = attempts
                     updated_job = json.dumps(job_data)
-
+                    
                     if attempts < MAX_RETRIES:
+                            
                         await redis_client.lpush(QUEUE, updated_job)
 
                         print(f"Retrying email with email_id: {job_data.get('email_id')} {attempts}/{MAX_RETRIES - 1}")
@@ -149,20 +159,11 @@ async def main():
     finally:
         await redis_client.aclose()
 
-print("WORKER FILE LOADED", flush=True)
-
-try:
-    print("ABOUT TO START MAIN", flush=True)
-    asyncio.run(main())
-except KeyboardInterrupt:
-    print("Worker interrupted", flush=True)
-except Exception as e:
-    print(f"WORKER CRASHED: {e}", flush=True)
-    traceback.print_exc()
-
-
-                
-
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Worker stopped", flush=True)
 
 
 
