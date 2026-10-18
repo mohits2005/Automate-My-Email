@@ -378,7 +378,7 @@ Software Engineer | Python · FastAPI · Backend Development · AI Integration
 
 - GitHub: [mohits2005](https://github.com/mohits2005)
 - Project repository: [Automate-My-Email](https://github.com/mohits2005/Automate-My-Email)
-- Live API: [automate-my-email.onrender.com](https://automate-my-email.onrender.com/)
+- Live API: [automate-my-email.onrender.com](https://automate-my-email-frontend.onrender.com/)
 
 ## 📄 License
 
