@@ -12,6 +12,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.email import Email
 
+from app.services.queue_service import enqueue_email_analysis
 
 router = APIRouter(
     tags=["Emails"]
@@ -92,7 +93,7 @@ def get_header(headers, name):
 
 
 @router.get("/emails/sync")
-def sync_emails(
+async def sync_emails(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -132,6 +133,8 @@ def sync_emails(
         }
 
     synced = []
+
+    new_emails = []
 
     for message in messages:
 
@@ -183,9 +186,14 @@ def sync_emails(
 
         db.add(email)
 
+        new_emails.append(email)
         synced.append(subject)
 
+
     db.commit()
+
+    for email in new_emails:
+        await enqueue_email_analysis(email.id)
 
     return {
         "message": "Emails synced successfully.",

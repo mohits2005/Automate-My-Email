@@ -18,6 +18,9 @@ class Settings(BaseSettings):
 
     GROQ_API_KEY: str
 
+    REDIS_UPSTASH_URL: str
+    REDIS_UPSTASH_TOKEN: str
+
     model_config = SettingsConfigDict(env_file=".env")
 
 
