@@ -39,6 +39,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Email Workflow", lifespan=lifespan)
 
+#Health Check
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+    
 Base.metadata.create_all(bind=engine)
 app.add_middleware(
     SessionMiddleware,
